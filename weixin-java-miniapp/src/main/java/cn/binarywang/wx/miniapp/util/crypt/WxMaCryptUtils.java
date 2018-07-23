@@ -30,9 +30,17 @@ public class WxMaCryptUtils extends me.chanjar.weixin.common.util.crypto.WxCrypt
     try {
       AlgorithmParameters params = AlgorithmParameters.getInstance("AES");
       params.init(new IvParameterSpec(Base64.decodeBase64(ivStr)));
-
+      int base = 16;
+      byte[] keyByte = Base64.decodeBase64(sessionKey);
+      if (keyByte.length % base != 0) {
+            int groups = keyByte.length / base + (keyByte.length % base != 0 ? 1 : 0);
+            byte[] temp = new byte[groups * base];
+            Arrays.fill(temp, (byte) 0);
+            System.arraycopy(keyByte, 0, temp, 0, keyByte.length);
+            keyByte = temp;
+      }
       Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
-      cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(Base64.decodeBase64(sessionKey), "AES"), params);
+      cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(keyByte, "AES"), params);
 
       return new String(PKCS7Encoder.decode(cipher.doFinal(Base64.decodeBase64(encryptedData))), StandardCharsets.UTF_8);
     } catch (Exception e) {
